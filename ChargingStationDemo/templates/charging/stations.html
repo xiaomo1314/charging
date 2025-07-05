@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<style>
+  /* 新背景，避免与导航冲突 */
+  body {
+    background: linear-gradient(135deg, #f8f9fc, #e0eafc);
+    color: #222;
+  }
+
+  h2, h3 {
+    text-align: center;
+    color: #0056b3;
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* 选择按钮样式 */
+  .filter-btn {
+    padding: 0.6rem 1.6rem;
+    font-size: 1rem;
+    border: 2px solid #007bff;
+    background-color: #fff;
+    color: #007bff;
+    border-radius: 12px;
+    font-weight: 600;
+    margin: 0.3rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .filter-btn:hover,
+  .filter-btn.active {
+    background-color: #007bff;
+    color: white;
+    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.3);
+  }
+
+  /* 列表容器 */
+  #station-list {
+    max-width: 1080px;
+    margin: 0 auto 4rem auto;
+    padding: 0 1rem;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: center;
+  }
+
+  .col-station {
+    flex: 1 1 320px;
+    max-width: 320px;
+  }
+
+  /* 卡片样式优化 */
+  article.station-item {
+    background-color: #ffffffee;
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: fadeInUp 0.5s forwards;
+  }
+
+  article.station-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  .station-info {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #333;
+  }
+
+  .station-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  select {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 10px;
+    border: 1.8px solid #ccc;
+    transition: border-color 0.3s ease;
+    min-width: 120px;
+  }
+
+  select:focus {
+    outline: none;
+    border-color: #0b67b0;
+    box-shadow: 0 0 10px #0b67b0aa;
+  }
+
+  .charge-btn {
+    background: linear-gradient(45deg, #0b67b0, #065293);
+    color: white;
+    padding: 0.55rem 1.5rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 1rem;
+    box-shadow: 0 6px 18px rgba(11,103,176,0.7);
+    transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
+  }
+
+  .charge-btn:hover {
+    background: linear-gradient(45deg, #065293, #033f64);
+    box-shadow: 0 8px 28px rgba(3,63,100,0.9);
+    transform: translateY(-2px);
+  }
+
+  .charge-btn:active {
+    transform: translateY(0);
+  }
+
+  #loading-spinner {
+    display: none;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  #loading-spinner.show {
+    display: block;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 480px) {
+    .station-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    select, .charge-btn {
+      width: 100%;
+      font-size: 1.1rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <section>
+    <h2 class="mb-4">请选择区域和充电桩类型</h2>
+
+    <!-- 区域筛选 -->
+    <div class="text-center mb-3">
+      <button class="filter-btn" data-filter="area" data-value="城北">城北</button>
+      <button class="filter-btn" data-filter="area" data-value="城南">城南</button>
+      <button class="filter-btn" data-filter="area" data-value="城东">城东</button>
+      <button class="filter-btn" data-filter="area" data-value="城西">城西</button>
+    </div>
+
+    <!-- 类型筛选 -->
+    <div class="text-center mb-4">
+      <button class="filter-btn" data-filter="type" data-value="0">类型0</button>
+      <button class="filter-btn" data-filter="type" data-value="1">类型1</button>
+    </div>
+  </section>
+
+  <div id="loading-spinner" role="status" aria-label="加载中">
+    <div class="spinner-border text-primary"></div>
+    <div class="text-primary mt-2">加载中...</div>
+  </div>
+
+  <section id="station-list"></section>
+
+  <script>
+    const chargeTimes = [30, 60, 90, 120];
+    const stationList = document.getElementById('station-list');
+    const spinner = document.getElementById('loading-spinner');
+
+    let selectedArea = '';
+    let selectedType = '';
+
+    function setLoading(state) {
+      spinner.classList.toggle('show', state);
+      stationList.style.display = state ? 'none' : 'block';
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter;
+        const value = btn.dataset.value;
+
+        document.querySelectorAll(`.filter-btn[data-filter="${filter}"]`).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        if (filter === 'area') selectedArea = value;
+        if (filter === 'type') selectedType = value;
+
+        if (selectedArea && selectedType) fetchStations();
+      });
+    });
+
+    function fetchStations() {
+      setLoading(true);
+      fetch(`/charging/api/stations?area=${encodeURIComponent(selectedArea)}&type=${encodeURIComponent(selectedType)}`)
+        .then(res => res.json())
+        .then(data => {
+          setLoading(false);
+          if (data.error) {
+            stationList.innerHTML = `<p class="text-danger text-center fs-5">${data.error}</p>`;
+            return;
+          }
+          if (data.length === 0) {
+            stationList.innerHTML = `<p class="text-center text-muted fs-5">暂无匹配充电桩</p>`;
+            return;
+          }
+
+          let html = `<h3 class="mb-4">区域：${selectedArea} / 类型：${selectedType}</h3><div class="row">`;
+          data.forEach((station, i) => {
+            const delay = (i * 100) % 400;
+            html += `
+              <div class="col-station">
+                <article class="station-item" style="animation-delay:${delay}ms">
+                  <div class="station-info">
+                    <strong>充电桩编号：</strong>${station.stationid}<br>
+                    <strong>类型：</strong>${station.facilitytype}<br>
+                    <strong>位置：</strong>${station.location}
+                  </div>
+                  <div class="station-actions">
+                    <select id="time-${station.stationid}">
+                      ${chargeTimes.map(t => `<option value="${t}">${t} 分钟</option>`).join('')}
+                    </select>
+                    <button class="charge-btn" onclick="startCharging('${station.stationid}')">立即充电</button>
+                  </div>
+                </article>
+              </div>`;
+          });
+          html += '</div>';
+          stationList.innerHTML = html;
+        })
+        .catch(() => {
+          setLoading(false);
+          stationList.innerHTML = `<p class="text-danger text-center fs-5">加载失败，请稍后重试</p>`;
+        });
+    }
+
+    function startCharging(stationid) {
+      const minutes = parseInt(document.getElementById(`time-${stationid}`).value, 10);
+      if (!confirm(`确认充电${minutes}分钟？`)) return;
+
+      fetch(`/charging/simulate/${stationid}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({duration: minutes})
+      }).then(res => {
+        if (res.redirected) window.location.href = res.url;
+        else return res.json();
+      }).then(data => {
+        if (data && data.error) alert('充电失败: ' + data.error);
+      }).catch(() => alert('请求异常，请稍后再试'));
+    }
+  </script>
+{% endblock %}

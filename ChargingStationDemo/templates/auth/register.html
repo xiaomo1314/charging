@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<style>
+  .form-container {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 10px 25px rgba(0, 123, 255, 0.08);
+    max-width: 420px;
+    margin: 4rem auto;
+    transition: box-shadow 0.3s ease;
+  }
+
+  .form-container:hover {
+    box-shadow: 0 14px 32px rgba(0, 123, 255, 0.12);
+  }
+
+  h2 {
+    color: #007bff;
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .form-control {
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1.5px solid #ccd6e0;
+    transition: border-color 0.3s ease;
+  }
+
+  .form-control:focus {
+    border-color: #007bff;
+    box-shadow: none;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+
+  .invalid-feedback {
+    font-size: 0.875rem;
+    margin-top: 0.3rem;
+    color: #dc3545;
+  }
+
+  .btn-primary {
+    background: linear-gradient(to right, #007bff, #3399ff);
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 0.75rem;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(to right, #0056b3, #227bdd);
+    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+  }
+
+  .switch-link {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.95rem;
+    color: #555;
+  }
+
+  .switch-link a {
+    color: #007bff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .switch-link a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+  }
+
+  input[readonly] {
+    background-color: #e9f2ff !important;
+    color: #555 !important;
+    font-weight: 600;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="form-container">
+    <h2>用户注册</h2>
+
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="mb-3">
+        <label class="form-label">用户ID（系统生成）</label>
+        <input type="text" class="form-control bg-light" value="{{ uid }}" readonly>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">注册日期</label>
+        <input type="text" class="form-control bg-light" value="{{ reg_date.strftime('%Y-%m-%d') }}" readonly>
+      </div>
+
+      <div class="mb-3">
+        {{ form.username.label(class="form-label") }}
+        {{ form.username(class="form-control", placeholder="请输入用户名", autofocus=True) }}
+        {% if form.username.errors %}
+          <div class="invalid-feedback d-block">
+            {{ form.username.errors[0] }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        {{ form.password.label(class="form-label") }}
+        {{ form.password(class="form-control", placeholder="请输入密码") }}
+        {% if form.password.errors %}
+          <div class="invalid-feedback d-block">
+            {{ form.password.errors[0] }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        {{ form.uage.label(class="form-label") }}
+        {{ form.uage(class="form-control", placeholder="请输入年龄") }}
+        {% if form.uage.errors %}
+          <div class="invalid-feedback d-block">
+            {{ form.uage.errors[0] }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="d-grid">
+        {{ form.submit(class="btn btn-primary btn-lg") }}
+      </div>
+    </form>
+
+    <div class="switch-link">
+      <p class="mb-0">
+        已有账号？
+        <a href="{{ url_for('auth.login') }}">去登录</a>
+      </p>
+    </div>
+  </div>
+{% endblock %}

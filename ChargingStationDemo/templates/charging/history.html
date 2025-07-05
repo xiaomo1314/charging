@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<style>
+  body {
+    background: linear-gradient(135deg, #f8f9fc, #e0eafc);
+    color: #222;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  h2 {
+    text-align: center;
+    color: #0b67b0;
+    margin: 2.5rem 0 2rem;
+    font-weight: 700;
+    font-size: 2.2rem;
+    text-shadow: 0 1px 3px rgba(0, 102, 179, 0.2);
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #065293;
+    margin: 2.5rem 0 1.2rem;
+    text-align: center;
+  }
+
+  /* 卡片风格的记录表格 */
+  .record-table {
+    width: 90%;
+    margin: 0 auto 2rem auto;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 123, 255, 0.15);
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .record-table th, .record-table td {
+    padding: 1rem 1.5rem;
+    text-align: center;
+    font-size: 1.05rem;
+    color: #444;
+  }
+
+  .record-table th {
+    background-color: #e9f2ff;
+    font-weight: 700;
+    color: #004085;
+    border-bottom: 2px solid #007bff;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.8);
+  }
+
+  .record-table tbody tr:nth-child(odd) {
+    background-color: #f6fbff;
+  }
+
+  .record-table tbody tr:hover {
+    background-color: #d2e4ff;
+    transition: background-color 0.3s ease;
+  }
+
+  .record-table tbody td {
+    border-bottom: 1px solid #e2e6ea;
+  }
+
+  .record-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* 数字右对齐 */
+  .record-table td:nth-child(4) {
+    text-align: right;
+    font-weight: 600;
+    color: #007bff;
+  }
+
+  /* 展开/折叠按钮 */
+  .toggle-btn {
+    display: block;
+    margin: 0 auto 1.8rem;
+    padding: 0.65rem 2.5rem;
+    background: linear-gradient(45deg, #0b67b0, #065293);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(11, 103, 176, 0.7);
+    transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
+    user-select: none;
+  }
+  .toggle-btn:hover,
+  .toggle-btn:focus {
+    background: linear-gradient(45deg, #065293, #033f64);
+    box-shadow: 0 8px 28px rgba(3, 63, 100, 0.9);
+    outline: none;
+    transform: translateY(-2px);
+  }
+  .toggle-btn:active {
+    transform: translateY(0);
+  }
+
+  /* 返回链接 */
+  .back-link {
+    display: block;
+    margin: 3rem auto 4rem;
+    text-align: center;
+    font-weight: 700;
+    color: #0b67b0;
+    font-size: 1.2rem;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  .back-link:hover,
+  .back-link:focus {
+    color: #064272;
+    text-decoration: underline;
+    outline: none;
+  }
+
+  /* 历史记录隐藏容器 */
+  #history-records {
+    max-width: 900px;
+    margin: 0 auto 3rem;
+    display: none;
+    animation: fadeIn 0.4s ease forwards;
+  }
+
+  /* 无记录提示 */
+  .no-record {
+    max-width: 600px;
+    margin: 6rem auto;
+    text-align: center;
+    color: #74808a;
+    font-style: italic;
+    font-size: 1.3rem;
+    user-select: none;
+  }
+
+  /* 动画 */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    h2 {
+      font-size: 1.8rem;
+    }
+    .section-title {
+      font-size: 1.3rem;
+    }
+    .toggle-btn {
+      width: 90%;
+      font-size: 1.05rem;
+    }
+    .back-link {
+      font-size: 1.1rem;
+    }
+    .record-table th, .record-table td {
+      padding: 0.7rem 0.9rem;
+      font-size: 0.95rem;
+    }
+  }
+  @media (max-width: 480px) {
+    .record-table {
+      font-size: 0.9rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <h2>我的充电记录</h2>
+
+  {% if records %}
+    <div role="region" aria-label="最近一次充电记录">
+      <div class="section-title">最近一次充电</div>
+      <table class="record-table" role="table" aria-describedby="recent-record-desc">
+        <caption id="recent-record-desc" class="visually-hidden">最近一次充电详情</caption>
+        <thead>
+          <tr>
+            <th scope="col">站点 ID</th>
+            <th scope="col">开始时间</th>
+            <th scope="col">结束时间</th>
+            <th scope="col">费用 (元)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ records[0].stationid }}</td>
+            <td>{{ records[0].begintime.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ records[0].endtime.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ records[0].money }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    {% if records|length > 1 %}
+      <button class="toggle-btn" id="toggle-history-btn" aria-expanded="false" aria-controls="history-records" aria-label="展开或折叠历史充电记录">
+        展开历史记录
+      </button>
+
+      <div id="history-records" role="region" aria-live="polite" aria-atomic="true" tabindex="0">
+        <table class="record-table" role="table" aria-describedby="history-record-desc">
+          <caption id="history-record-desc" class="visually-hidden">历史充电详情</caption>
+          <thead>
+            <tr>
+              <th scope="col">站点 ID</th>
+              <th scope="col">开始时间</th>
+              <th scope="col">结束时间</th>
+              <th scope="col">费用 (元)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in records[1:] %}
+            <tr>
+              <td>{{ record.stationid }}</td>
+              <td>{{ record.begintime.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>{{ record.endtime.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>{{ record.money }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="no-record" role="alert" aria-live="polite" aria-atomic="true">
+      暂无充电记录。
+    </div>
+  {% endif %}
+
+  <a href="{{ url_for('charging.stations') }}" class="back-link" role="link">← 返回充电站选择</a>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('toggle-history-btn');
+      const history = document.getElementById('history-records');
+
+      if (!btn || !history) return;
+
+      btn.addEventListener('click', () => {
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        if (expanded) {
+          history.style.display = 'none';
+          btn.setAttribute('aria-expanded', 'false');
+          btn.textContent = '展开历史记录';
+        } else {
+          history.style.display = 'block';
+          btn.setAttribute('aria-expanded', 'true');
+          btn.textContent = '折叠历史记录';
+          history.focus();
+        }
+      });
+    });
+  </script>
+{% endblock %}
