@@ -13,7 +13,7 @@
 #     DB_NAME = os.getenv("DB_NAME", "chargingdb")      # 默认chargingdb
 #
 #     # DeepSeek API配置（修正重点）
-#     DEEPSEEK_API_KEY = "sk-bc80d95b5fe84116860aaeb046745347"  # 直接赋值（仅本地测试用）
+#     DEEPSEEK_API_KEY = "key"  # 直接赋值（仅本地测试用）
 #     DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
 #     DEEPSEEK_MODEL = "deepseek-chat"
 #
